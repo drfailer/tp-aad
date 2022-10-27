@@ -1,0 +1,32 @@
+digraph G {
+  //orientation=L;
+  
+  S -> a;
+  a -> b [label=120];
+  b -> c [label=180];
+  b -> e [label=180];
+  b -> d [label=180];
+  b -> f [label=180];
+  S -> g [label=0];
+  e -> j [label=60];
+  d -> j [label=30];
+  g -> j [label=240];
+  f -> j [label=90];
+  e -> h [label=60];
+  d -> h [label=30];
+  g -> h [label=240];
+  f -> h [label=90];
+  j -> k [label=240];
+  j -> l [label=240];
+  j -> i [label=240];
+  h -> k [label=180];
+  h -> l [label=180];
+  h -> i [label=180];
+  k -> E [label=360];
+  l -> E [label=240];
+  i -> E [label=30];
+  S -> f [label=450];
+  S -> e [label=450];
+  S -> c [label=450];
+  S -> d [label=450];
+}
