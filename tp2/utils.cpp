@@ -143,7 +143,7 @@ void recherchePosition(t_solution& solution, t_instance& instance, int pieceCour
   int rangICour = instance.nbMachines;
   int rangIPred = instance.nbMachines;
 
-  for (int i = instance.nbMachines * instance.nbPieces; !predTrouve && i >= 1; ++i) {
+  for (int i = instance.nbMachines * instance.nbPieces; !predTrouve && i >= 1; --i) {
     if (solution.bierwith[i] == pieceCour) {
       if (rangICour == rangCour)
         indexCour = i;
@@ -174,9 +174,9 @@ void rechercheLocale(t_solution& solution, t_instance& instance, int maxIter) {
     int indexCour, indexPred;
     t_solution solutionPrime;
     int machineCour, machinePred;
+    /* int solutionVisite[k] = {0}; */
 
     evaluer(solution, instance);
-    std::cout << solution.count << std::endl;
     // noeud courant = *
     rangCour = -1;
     pieceCour = -1;
@@ -197,7 +197,9 @@ void rechercheLocale(t_solution& solution, t_instance& instance, int maxIter) {
         evaluer(solutionPrime, instance);
 
         // si on améliore la solution
-        if (solutionPrime.count < solution.count) {
+        if (solutionPrime.count < solution.count) { // TODO: use the hash to
+                                                    // test if the solutionPrime
+                                                    // is known
           solution = solutionPrime;
           // noeud courant = *
           rangCour = -1;
@@ -214,7 +216,7 @@ void rechercheLocale(t_solution& solution, t_instance& instance, int maxIter) {
           machineCour = machinePred;
           // j = pere[i]
           rangPred = solution.pere[pieceCour][rangCour].rang;
-          piecePred = solution.pere[pieceCour][pieceCour].piece;
+          piecePred = solution.pere[pieceCour][rangCour].piece;
           machinePred = instance.machines[piecePred][rangPred];
         }
       } else {
@@ -224,7 +226,7 @@ void rechercheLocale(t_solution& solution, t_instance& instance, int maxIter) {
         machineCour = machinePred;
         // j = pere[i]
         rangPred = solution.pere[pieceCour][rangCour].rang;
-        piecePred = solution.pere[pieceCour][pieceCour].piece;
+        piecePred = solution.pere[pieceCour][rangCour].piece;
         machinePred = instance.machines[piecePred][rangPred];
       }
 

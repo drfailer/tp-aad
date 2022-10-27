@@ -21,15 +21,18 @@ int main()
     t_solution solution = { 0 };
     t_instance instance = { 0 };
     srand(0);
+    /* lectureFichier(instance, "./test/la_test.txt"); */
     lectureFichier(instance, "./test/la01.txt");
+    /* lectureFichier(instance, "./test/la02.txt"); */
 
     genererVecteurBierwith(solution, instance);
     /* evaluer(solution, instance); */
+
     rechercheLocale(solution, instance, 1000000000);
     std::cout << solution.count << std::endl;
 
     // afficher_solution(instance, solution);
-    /* premierTest(solution, instance); */
+    // premierTest(solution, instance);
 }
 
 void premierTest(t_solution& solution, t_instance& instance)
