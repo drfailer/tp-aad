@@ -1,9 +1,9 @@
-#pragma once 
+#pragma once
 #include <iostream>
 
 const int nmax = 100;
 const int k = 99999;
-const int inf = 9999;
+const int inf = 99999;
 
 typedef struct {
 	int nbMachines;

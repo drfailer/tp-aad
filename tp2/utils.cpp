@@ -340,6 +340,8 @@ t_solution genererVoisin(t_solution &solution, t_instance &instance) {
 void grasp(t_solution &solution, t_instance &instance, int nbELS, int nbVoisin,
            int nbIter) {
   t_solution voisin;
+  t_solution bestOfTheBestOfTheBestOfTheBestSir;
+  bestOfTheBestOfTheBestOfTheBestSir.count = inf;
   int        iter = 0;
 
   memset(&T[0], k, sizeof(int));
@@ -355,27 +357,34 @@ void grasp(t_solution &solution, t_instance &instance, int nbELS, int nbVoisin,
 
     t_solution sol_depart_els = solution;
 
-    /* etape 2. Générer `nbVoisin` voisins, garder le meilleur et recomencer
+    /* etape 2. Générer `nbVoisin` voisins, garder le meilleur et recommencer
      *          `nbELS` fois.
      */
     for (int j = 1; j <= nbELS; j++) {
       int        nbv = 0;
       t_solution best;
-      best.count = 9999;
+      best.count = inf;
 
       // génération des voisins de la solution de départ + sauvegarde du
       // meilleur
-      while (nbv < nbVoisin && iter < 1000000 && nbv != 0) {
+      while ((nbv < nbVoisin && iter < 1000) || nbv == 0) {
         voisin = genererVoisin(sol_depart_els, instance);
         evaluer(voisin, instance);
         rechercheLocale(voisin, instance, 1000000);
-        if (T[voisin.h] == 0 && voisin.count < best.count) {
-          best = voisin;
+        if (T[voisin.h] == 0) {
+          if (voisin.count < best.count)
+            best = voisin;
           nbv++;
+          T[voisin.h] = 1;
         }
         iter++;
       }
       sol_depart_els = best; // on repart de la meilleur solution
+
+      // sauvegarde du meilleur
+      if (best.count < bestOfTheBestOfTheBestOfTheBestSir.count)
+        bestOfTheBestOfTheBestOfTheBestSir = best;
     }
   }
+  solution = bestOfTheBestOfTheBestOfTheBestSir;
 }

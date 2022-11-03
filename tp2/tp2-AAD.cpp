@@ -35,10 +35,8 @@ int main() {
   /*   if (solution.count < min) */
   /*     min = solution.count; */
   /* } */
-  for (int i = 0; i < 20; ++i) {
-    grasp(solution, instance, 10, 10, 1000);
-    std::cout << "solution: " << solution.count << std::endl;
-  }
+  grasp(solution, instance, 10, 10, 1000);
+  std::cout << "solution: " << solution.count << std::endl;
 
   // afficher_solution(instance, solution);
   // premierTest(solution, instance);
