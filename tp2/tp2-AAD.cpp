@@ -11,25 +11,32 @@ FONCTION:
 */
 
 #include <iostream>
-#include <ostream>
 #include <stdlib.h>
 #include "utils.h"
-#include "tp2-AAD.h"
 
 int main()
 {
     t_solution solution = { 0 };
     t_instance instance = { 0 };
     srand(0);
-    /* lectureFichier(instance, "./test/la_test.txt"); */
-    lectureFichier(instance, "./test/la01.txt");
-    /* lectureFichier(instance, "./test/la02.txt"); */
+    lectureFichier(instance, "la01.txt");
 
     genererVecteurBierwith(solution, instance);
-    /* evaluer(solution, instance); */
+    //evaluer(solution, instance);
 
-    rechercheLocale(solution, instance, 1000000000);
-    std::cout << solution.count << std::endl;
+    //rechercheLocale(solution, instance, 100000000);
+    //std::cout << solution.count << std::endl;
+    //afficher_solution(instance, solution);
+
+ //   int min = solution.count;
+ //   for (int i = 0; i < 100000; ++i) {
+	//	genererVecteurBierwith(solution, instance);
+	//	rechercheLocale(solution, instance, 100000000);
+ //       if (solution.count < min)
+ //           min = solution.count;
+ //   }
+    grasp(solution, instance, 10, 10, 1000);
+	std::cout << "solution: " << solution.count << std::endl;
 
     // afficher_solution(instance, solution);
     // premierTest(solution, instance);
@@ -56,6 +63,8 @@ void afficher_solution(t_instance& instance, t_solution& solution)
         }
         std::cout << std::endl;
     }
+
+    std::cout << solution.pereEtoile.piece << " " << solution.pereEtoile.rang << std::endl;
 
     for (int i = 1; i <= instance.nbPieces; ++i) {
         for (int j = 1; j <= instance.nbMachines; ++j) {
