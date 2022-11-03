@@ -18,28 +18,19 @@ FONCTION:
 int main() {
   t_solution solution = {0};
   t_instance instance = {0};
-  srand(time(NULL));
+  srand(0);
+
   lectureFichier(instance, "./test/la01.txt");
-
-  genererVecteurBierwith(solution, instance);
-  evaluer(solution, instance);
-
-  /* rechercheLocale(solution, instance, 100000000); */
-  /* std::cout << solution.count << std::endl; */
-  /* afficher_solution(instance, solution); */
-
-  /* int min = solution.count; */
-  /* for (int i = 0; i < 100000; ++i) { */
-  /*   genererVecteurBierwith(solution, instance); */
-  /*   rechercheLocale(solution, instance, 100000000); */
-  /*   if (solution.count < min) */
-  /*     min = solution.count; */
-  /* } */
   grasp(solution, instance, 10, 10, 1000);
   std::cout << "solution: " << solution.count << std::endl;
 
-  // afficher_solution(instance, solution);
-  // premierTest(solution, instance);
+  lectureFichier(instance, "./test/la02.txt");
+  grasp(solution, instance, 10, 10, 1000);
+  std::cout << "solution: " << solution.count << std::endl;
+
+  /* lectureFichier(instance, "./test/la_test.txt"); */
+  /* grasp(solution, instance, 2, 2, 1000); */
+  /* std::cout << "solution: " << solution.count << std::endl; */
 }
 
 void premierTest(t_solution &solution, t_instance &instance) {

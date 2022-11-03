@@ -42,7 +42,6 @@ static inline int hachage(t_solution &solution, t_instance &instance) {
  */
 void lectureFichier(t_instance &instance, std::string name) {
   std::ifstream fichier(name, std::ios::in);
-  int           numMachine;
   int           machine;
 
   if (fichier) {
@@ -99,8 +98,9 @@ void genererVecteurBierwith(t_solution &solution, t_instance &instance) {
 
 /**
  * @brief Evalue une solution pour une instance de graphe et un vecteur de
- * bierwith. L'évaluation met à jour la solution en modifiant le tableau des
- * pères, des dates, ... Le hash de la solution trouvée est calculé à la fin.
+ *        bierwith. L'évaluation met à jour la solution en modifiant le tableau
+ *        des pères, des dates, ... Le hash de la solution trouvée est calculé à
+ *        la fin.
  *
  * @param solution Solution que l'on met à jour lors de l'évaluation. Elle
  *        contient le vecteur de bierwith qui determine le sens dans lequel on
@@ -148,7 +148,7 @@ void evaluer(t_solution &solution, t_instance &instance) {
 
     machineCourrante = instance.machines[pieceActuelle][rangPiece];
 
-    // arc vertical
+    // lien disjonctif
     if (ordreSurMachine[machineCourrante][0] != 0) {
       numeroPieceMachine = ordreSurMachine[machineCourrante][0];
       rangPieceMachine = ordreSurMachine[machineCourrante][1];
@@ -268,9 +268,7 @@ void rechercheLocale(t_solution &solution, t_instance &instance, int maxIter) {
       evaluer(solutionPrime, instance);
 
       // si on améliore la solution
-      if (solutionPrime.count < solution.count) { // TODO: use the hash to
-                                                  // test if the solutionPrime
-                                                  // is known
+      if (solutionPrime.count < solution.count) {
         solution = solutionPrime;
         // noeud courant = *
         rangCour = -1;
@@ -351,8 +349,8 @@ t_solution genererVoisin(t_solution &solution, t_instance &instance) {
 void grasp(t_solution &solution, t_instance &instance, int nbELS, int nbVoisin,
            int nbIter) {
   t_solution voisin;
-  t_solution bestOfTheBestOfTheBestOfTheBestSir;
-  bestOfTheBestOfTheBestOfTheBestSir.count = inf;
+  t_solution bestSolution;
+  bestSolution.count = inf;
   int iter = 0;
 
   memset(&T[0], k, sizeof(int));
@@ -366,36 +364,36 @@ void grasp(t_solution &solution, t_instance &instance, int nbELS, int nbVoisin,
     } while (T[solution.h] == 1);
     T[solution.h] = 1; // marquage de la solution
 
-    t_solution sol_depart_els = solution;
+    t_solution solDepartELS = solution;
 
     /* etape 2. Générer `nbVoisin` voisins, garder le meilleur et recommencer
      *          `nbELS` fois.
      */
     for (int j = 1; j <= nbELS; j++) {
       int        nbv = 0;
-      t_solution best;
-      best.count = inf;
+      t_solution tmpBest;
+      tmpBest.count = inf;
 
       // génération des voisins de la solution de départ + sauvegarde du
       // meilleur
       while ((nbv < nbVoisin && iter < 1000) || nbv == 0) {
-        voisin = genererVoisin(sol_depart_els, instance);
+        voisin = genererVoisin(solDepartELS, instance);
         evaluer(voisin, instance);
         rechercheLocale(voisin, instance, 1000000);
         if (T[voisin.h] == 0) {
-          if (voisin.count < best.count)
-            best = voisin;
+          if (voisin.count < tmpBest.count)
+            tmpBest = voisin;
           nbv++;
           T[voisin.h] = 1;
         }
         iter++;
       }
-      sol_depart_els = best; // on repart de la meilleur solution
+      solDepartELS = tmpBest; // on repart de la meilleur solution
 
       // sauvegarde du meilleur
-      if (best.count < bestOfTheBestOfTheBestOfTheBestSir.count)
-        bestOfTheBestOfTheBestOfTheBestSir = best;
+      if (tmpBest.count < bestSolution.count)
+        bestSolution = tmpBest;
     }
   }
-  solution = bestOfTheBestOfTheBestOfTheBestSir;
+  solution = bestSolution;
 }

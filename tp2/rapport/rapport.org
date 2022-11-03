@@ -1,0 +1,374 @@
+#+TITLE: TP JS
+#+AUTHOR: CLIQUOT Théo
+#+AUTHOR: CHASSAGNOL Rémi
+#+setupfile: ~/.emacs.d/emacs-config/org-setup-files/df-standard.org
+#+LATEX_HEADER: \usepackage{placeins}
+#+DATE: TODO
+#+OPTIONS: toc:nil title:nil
+
+#+LATEX_HEADER: \usepackage{multicol}
+#+begin_export latex
+\begin{titlepage}
+\begin{center}
+    
+    \textsc{\LARGE TP}\\[0.5cm]
+    
+    {\huge \bfseries TP Aide à la décision - JS\\[2cm]}
+
+      \centering
+      \includegraphics[scale=0.25]{./img/banner.png}
+
+      \vspace*{\fill}
+
+    \begin{multicols}{2}
+      \large
+      CLIQUOT Théo\\
+      CHASSAGNOL Rémi\\
+
+      \columnbreak
+
+      \large
+      \emph{Professeur:} LACOMME Philippe\\
+    \end{multicols}
+
+    \textsc{7 octobre 2022}
+
+  \end{center}
+\end{titlepage}
+
+\clearpage
+\tableofcontents
+\clearpage
+#+end_export
+
+* Introduction
+
+** Enoncé du problème
+
+   On cherche à résoudre un problème de job shop.
+   Un job shop correspond à une séquence de passage dans des machines pour un
+   ensemble de pièces. Chaque pièces passent dans chaque machine mais dans des
+   ordres différents et en y passant des temps différents. Notre but est de
+   minimiser le temps nécessaires pour que toutes les pièces ai finit leur
+   processus.
+   
+** Structure et Choix d'implémentation
+
+   Il nous faut stocker plusieurs informations tout du long de notre étude du
+   job shop. Pour cela nous avons séparer nos données en 2 structures distinctes:
+
+   + Une structure =instance_t= qui va contenir:
+   - Le nombre de Machines et de Pièces
+   - Un tableau2D qui va nous renvoyer la machine correspondante à la pièce
+   ($1^er$ argument) et au numéro d'ordre ($2^nd$ argument). (On peut linéariser
+   le tableau afin d'avoir une meilleure optimisation.) 
+   - De la même façon, un tableau 2D qui va nous renvoyer cette fois-ci le temps
+   que va passer la pièce n°i pour l'opération n°j (T[i][j]).
+
+   + Une structure =solution_t= avec:
+     - Le coût de cette solution
+     - Le temps pour une pièce et une opération données.
+     - L'opération *père* pour une pièce et une opération données. (c'est à dire
+     qu'elle est l'opération effectué juste avant de réaliser celle-ci).
+     - Le *père* de notre élément étoile (le dernier élément, lorsque toute nos
+     opérations sont finis).
+     - Le vecteur de bierwith qui a donné cette solution.
+     - Le hachage de cette solution. (utile pour le GRASP).
+  
+* Implémentation
+
+** Lecture Dans un fichier
+
+   Nous avons déjà un choix de représentation des données du job shop si on suit
+   la formalisation de brunel. Cette représentation est sous la forme:
+
+   + Une première ligne donnant le nombre de machine et de pièces
+   + Chaque ligne n°i suivante contient la suite d'opération (couple [machine
+   coût]) pour la pièce n°i).
+
+   On peut donc récupérer toutes les informations de ce fichier avec une simple
+   boucle for comme on peut le voir dans le code ci dessous:
+    
+   #+BEGIN_SRC C++
+     fichier >> instance.nbPieces >> instance.nbMachines;
+     
+	 for (int i = 1; i <= instance.nbPieces; ++i) {
+	   for (int j = 1; j <= instance.nbMachines; ++j) {
+	     fichier >> machine;
+	     instance.machines[i][j] = machine + 1; // on compte à partir de 1
+	     fichier >> instance.coutPieceMachine[i][j];
+	   }
+	 }
+     }
+#+END_SRC
+
+** Evaluer d'un graphe
+
+L'évaluation nécessite d'avoir au préalable générer un *vecteur de Bierwith* avec
+la fonction dédiée. Le but de l'évaluation est de trouver les dates au plus tôt
+pour un vecteur de Bierwith donné, et donc de mettre à jours les tableaux =dates=
+et =pere= de =solution= et le coût de la solution. La fonction permet aussi de
+trouver le père du nœud *** on en a besoin par la suite. Enfin, à la fin de
+l'évaluation, on calcule aussi le *hasch* de la solution, se *hash* sera utilisé par
+la suite.
+
+Le fonctionnement de la fonctions est le suivant:
+
+On traite les pièces suivant leur apparition dans le vecteur de Bierwith. On a
+donc une boucle qui parcours le vecteur. A chaque tour de boucle, on met à
+jour =pieceActuelle= qui correspond au numéro de la pièce courante, et =rangPiece=
+qui correspond au rang de la pièce. Pour trouver le rang, on utilise un
+tableau =occurencePiece= qui compte l'apparition des pièces.
+
+#+caption: Boucle principale de l'évaluation.
+#+begin_src C
+  // parcours du vecteur de bierwith et mise à jour de solution
+  for (int i = 1; i <= instance.nbMachines * instance.nbPieces; ++i) {
+    pieceActuelle = solution.bierwith[i];
+    rangPiece = ++occurencePiece[pieceActuelle];
+
+    // ...
+   }
+#+end_src
+
+On commence par mettre à jours la date (et le père) suivant le lien
+horizontal. Ici, on modifie la date si $date(piecePrecedente) +
+cout(piecePrecedente) > date(pieceActuelle)$. A noter que le lien horizontal
+n'est mis à jours que pour les pièces de rang supérieur à 1 puisqu'une pièce
+de rang 1 n'a pas de père *TODO: trouver un moyen de l'expliquer mieux*.
+
+#+caption: Traitement de l'arc horizontal.
+#+begin_src C
+  if (occurencePiece[pieceActuelle] > 1) {
+    oldDate =
+      solution.dates[pieceActuelle][rangPiece - 1]; // date du noeud précédent (horizontalement)
+
+    if (oldDate + instance.coutPieceMachine[pieceActuelle][rangPiece - 1]
+        > solution.dates[pieceActuelle][rangPiece]) {
+      // mise à jours de la solution
+    }
+   }
+#+end_src
+
+Ensuite on traite le lien disjonctif. Ici le principe est le même sauf qu'on
+regarde la pièce qui est passé en dernier sur la machine courante et la date
+est modifié si $pieceSurMachine + cout(pieceSurMachine) > cout(piece)$.
+
+#+caption: Traitement de l'arc disjonctif.
+#+begin_src C
+  machineCourrante = instance.machines[pieceActuelle][rangPiece];
+
+  if (ordreSurMachine[machineCourrante][0] != 0) {
+    numeroPieceMachine = ordreSurMachine[machineCourrante][0];
+    rangPieceMachine = ordreSurMachine[machineCourrante][1];
+    oldDate = solution.dates[numeroPieceMachine][rangPieceMachine];
+
+    if (oldDate + instance.coutPieceMachine[numeroPieceMachine][rangPieceMachine]
+        > solution.dates[pieceActuelle][rangPiece]) {
+      // mise à jour de la solution
+    }
+   }
+#+end_src
+
+À la fin on met à jour la pièce sur la machine et on met à jours le coût de la
+solution si besoin.
+
+#+caption: Mise à jour de la piece sur la machine et du coût
+#+begin_src C
+  // mise à jour de l'ordre de passage sur les machines
+  ordreSurMachine[machineCourrante][0] = pieceActuelle;
+  ordreSurMachine[machineCourrante][1] = rangPiece;
+
+  // si on traite le dernier noeud (*), on met à jour le cout de la solution
+  // et le père du dernier noeud.
+  if (rangPiece == instance.nbMachines) {
+    if (solution.dates[pieceActuelle][rangPiece]
+        + instance.coutPieceMachine[pieceActuelle][rangPiece] > solution.count) {
+      // mise à jours du cout et du père de '*'
+    }
+   }
+  }
+#+end_src
+
+*** Calcul du hash
+
+Dans les parties suivantes, on aura besoin de pourvoir tester si un solution a
+déjà été traitée, pour ce faire on aura besoin d'identifier les solution via un
+=hash=. La fonction de hachage suit la formule suivante:
+
+$h = \sum_{d \in dates}{(d^{2} \% k)}$ ou k est le nombre d'éléments de la table
+de hachage.
+
+#+begin_src C
+  static inline int hachage(t_solution &solution, t_instance &instance) {
+    unsigned long int h = 0;
+    unsigned long int dateCourrante;
+
+    for (int i = 1; i <= instance.nbPieces; ++i) {
+      for (int j = 1; j <= instance.nbMachines; ++j) {
+        dateCourrante = solution.dates[i][j];
+        h = (h + (dateCourrante * dateCourrante)) % k;
+      }
+    }
+
+    if (h > k)
+      exit(-1);
+    return h;
+  }
+#+end_src
+
+La fonction est =inline= pour avoir un code plus rapide.
+
+** Recherche locale
+
+*** Raisonnement
+
+   Le but de cette fonction est de nous retourner la meilleure solution au
+   niveau locale, c'est à dire qu'on va prendre en argument une solution
+   actuelle, et on va chercher toutes les modification locales possibles
+   améliorant notre solution. Les modifications locales correspondent à une
+   permutation entre 2 opérations sur la même machine mais avec des pièces
+   différentes (et on ne s'intéresse qu'au chemin critique vu que c'est celui ci
+   qui nous limite, le chemin critique est trouvé en parcourant les pères, et
+   ceux en commençant par notre noeud étoile).
+
+   La logique de cette algorithme est donc de parcourir notre chemin critique en
+   sens inverse (jusqu'à arriver au noeud 0, le noeud de début), et durant le
+   parcours du chemin, si on à un arc disjonctif, on va évaluer de nouveau notre
+   solution en permutant cette fois-ci les deux opérations à l'origine de cette
+   arc. Si la solution ainsi trouvé est meilleur ont repart du noeud de fin
+   (étoile) et on recommence. Sinon (arc non disjonctif ou pire coût) on
+   continue notre parcours du chemin critique.
+
+*** Implémentation
+    
+   Pour pouvoir permuter nos 2 noeuds dans le vecteur, on doit d'abord
+   connaître leur position dans le vecteur de bierwith, C'est le but de notre
+   fonction =recherchePosition= qui va nous prendre la pièce et le range de
+   notre noeud courant et précédent et va nous renvoyer leur position dans le
+   vecteur de bierwith. Pour cela on parcours le vecteur en sens inverse et dès
+   qu'on voit notre pièce, on décrémente son rang. Dès qu'on atteint 0, on à
+   trouvé notre index. Une optimisation apporté est de séparer le while on deux,
+   en effet une fois qu'on à trouvé notre noeud courant, plus besoin de le
+   chercher on peut se concentrer seulement sur le précédent.
+
+   #+BEGIN_SRC C
+    while (!trouve) { // cour
+    if (solution.bierwith[i] == pieceCour) {
+      if (rangICour == rangCour) {
+        indexCour = i;
+        trouve = true;
+      }
+      rangICour -= 1;
+    }
+    if (solution.bierwith[i] == piecePred) {
+      rangIPred -= 1;
+    }
+    --i;
+  }
+  trouve = false;
+  while (!trouve) { // pred
+    if (solution.bierwith[i] == piecePred) {
+      if (rangIPred == rangPred) {
+        indexPred = i;
+        trouve = true;
+      }
+      rangIPred -= 1;
+    }
+    --i;
+#+END_SRC
+
+Une fois cette fonction écrite, nos parties se résume à:
+
+#+BEGIN_SRC C
+  // Si arc disjonctif
+  if (machineCour == machinePred) {
+     solutionPrime = solution;
+  
+     recherchePosition(solution, instance, pieceCour, rangCour, rangPred,
+		       piecePred, indexCour, indexPred);
+     permuter(solutionPrime, indexCour, indexPred);
+  
+     // evaluation de la nouvelle solution
+     evaluer(solutionPrime, instance);
+  
+     // si on améliore la solution
+     if (solutionPrime.count < solution.count)
+       {
+	 // On repart du noeud étoile et on change notre solution
+       }
+     else
+       {
+	 // On avance
+       }
+     }
+   else
+     {
+       // On avance.
+     }
+#+END_SRC
+
+** GRASP
+
+Le but de cet algorithme est de s'approcher au maximum de la meilleur solution
+du problème. Pour ce faire, on suit le schéma suivant:
+
+#+CAPTION: Principe du GRASP. 
+[[./img/grasp_shema.png]]
+\FloatBarrier
+
+On commence par générer une solution aléatoire. Utiliser une table de hachage
+pour s'assurer que la solution que l'on traite n'a jamais été explorée.
+
+#+CAPTION: Recherche d'une solution aléatoire non traitée.
+#+begin_src C
+  do {
+    genererVecteurBierwith(solution, instance);
+    evaluer(solution, instance);
+    rechercheLocale(solution, instance, 1000000);
+   } while (T[solution.h] == 1);
+  T[solution.h] = 1; // marquage de la solution
+#+end_src
+
+Ensuite on génère =nbVoisin= voisins de la solution trouvée précédemment. Pour
+chaque voisin, on l'évalue, on fait une recherche locale, si le voisin n'est pas
+traité, on test si le coût est plus faible que celui de la meilleure solution
+trouvée jusqu'ici, on met à jour la meilleur solution.
+
+#+begin_src C
+  for (int j = 1; j <= nbELS; j++) {
+    int        nbv = 0;
+    t_solution tmpBest;
+    tmpBest.count = inf;
+
+    // génération des voisins de la solution de départ + sauvegarde du
+    // meilleur
+    while ((nbv < nbVoisin && iter < 1000) || nbv == 0) {
+      voisin = genererVoisin(solDepartELS, instance);
+      evaluer(voisin, instance);
+      rechercheLocale(voisin, instance, 1000000);
+      if (T[voisin.h] == 0) {
+        if (voisin.count < tmpBest.count)
+          tmpBest = voisin;
+        nbv++;
+        T[voisin.h] = 1;
+      }
+      iter++;
+    }
+    solDepartELS = tmpBest; // on repart de la meilleur solution
+
+    // sauvegarde du meilleur
+    if (tmpBest.count < bestSolution.count)
+      bestSolution = tmpBest;
+   }
+#+end_src
+
+A noter que le nombre de voisin trouvé n'est incrémenté uniquement lorsque le
+voisin généré n'a pas été traité. De ce fait, on laisse une condition de
+sécurité pour éviter une boucle infinie dans le cas ou on arrive pas à générer
+=nbVoisin=.
+
+On répète les étapes précédentes =nbIter= fois et on met à jour =bestSolution= à
+chaque fois. À la fin, =solution= prend la valeur de la meilleur solution trouvée.
+
+* Conclusion
