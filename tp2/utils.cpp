@@ -132,9 +132,10 @@ void evaluer(t_solution &solution, t_instance &instance) {
 
     // lien horizontal
     if (occurencePiece[pieceActuelle] > 1) {
-      oldDate = solution.dates[pieceActuelle][rangPiece - 1]; // date du noeud
-                                                              // précédent
-                                                              // (horizontalement)
+      oldDate =
+          solution.dates[pieceActuelle][rangPiece - 1]; // date du noeud
+                                                        // précédent
+                                                        // (horizontalement)
 
       if (oldDate + instance.coutPieceMachine[pieceActuelle][rangPiece - 1] >
           solution.dates[pieceActuelle][rangPiece]) {
@@ -190,24 +191,34 @@ void evaluer(t_solution &solution, t_instance &instance) {
 void recherchePosition(t_solution &solution, t_instance &instance,
                        int pieceCour, int rangCour, int rangPred, int piecePred,
                        int &indexCour, int &indexPred) {
-  bool predTrouve = false;
+  bool trouve = false;
   int  rangICour = instance.nbMachines;
   int  rangIPred = instance.nbMachines;
+  int  i = instance.nbMachines * instance.nbPieces;
 
-  for (int i = instance.nbMachines * instance.nbPieces; !predTrouve && i >= 1;
-       --i) {
+  while (!trouve) { // cour
     if (solution.bierwith[i] == pieceCour) {
-      if (rangICour == rangCour)
+      if (rangICour == rangCour) {
         indexCour = i;
+        trouve = true;
+      }
       rangICour -= 1;
     }
     if (solution.bierwith[i] == piecePred) {
+      rangIPred -= 1;
+    }
+    --i;
+  }
+  trouve = false;
+  while (!trouve) { // pred
+    if (solution.bierwith[i] == piecePred) {
       if (rangIPred == rangPred) {
         indexPred = i;
-        predTrouve = true;
+        trouve = true;
       }
       rangIPred -= 1;
     }
+    --i;
   }
 }
 
@@ -342,7 +353,7 @@ void grasp(t_solution &solution, t_instance &instance, int nbELS, int nbVoisin,
   t_solution voisin;
   t_solution bestOfTheBestOfTheBestOfTheBestSir;
   bestOfTheBestOfTheBestOfTheBestSir.count = inf;
-  int        iter = 0;
+  int iter = 0;
 
   memset(&T[0], k, sizeof(int));
 
