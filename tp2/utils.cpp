@@ -1,4 +1,5 @@
 #include "utils.h"
+#include <cstdlib>
 #include <stdlib.h>
 
 #include <cstring>
@@ -56,8 +57,10 @@ void lectureFichier(t_instance &instance, std::string name) {
     }
 
     fichier.close();
-  } else
+  } else {
     std::cerr << "Impossible d'ouvrir le fichier !" << std::endl;
+    exit(EXIT_FAILURE);
+  }
 }
 
 /**
@@ -295,6 +298,15 @@ void rechercheLocale(t_solution &solution, t_instance &instance, int maxIter) {
   }
 }
 
+/**
+ * @brief Génère un voisin d'un vecteur de bierwith en permutant 2 indices dans
+ *        un vecteur donné.
+ *
+ * @param solution Solution qui contient un vecteur de bierwith.
+ * @param instance Instance du graphe de solution.
+ *
+ * @return Solution voisinne de la solution donnée en entrée.
+ */
 t_solution genererVoisin(t_solution &solution, t_instance &instance) {
   t_solution voisin = solution;
   int        tailleBierwith = instance.nbPieces * instance.nbMachines;
@@ -310,6 +322,21 @@ t_solution genererVoisin(t_solution &solution, t_instance &instance) {
   return voisin;
 }
 
+/**
+ * @brief Recherche du minimum global. Génère un certain nombre de vecteur de
+ *        bierwith. Pour la meilleur solution, génère un certain nombre de
+ *        voisins, et effectue une recherche locale pour chacun d'eux. L'étape
+ *        précédente est effectuée un certain nombre de fois sur le meilleur
+ *        voisin trouvé.
+ *        A la fin solution contient la meilleure solution trouvée.
+ *
+ * @param solution Solution trouvé
+ * @param instance Instance du graphe pour laquelle on cherche une solution.
+ * @param nbELS    Nombre de fois où on génère des voisins et on récupère le
+ *                 meilleur.
+ * @param nbVoisin Nombre de voisin à générer à chaque étape
+ * @param nbIter   Nombre d'itération de l'algorithme
+ */
 void grasp(t_solution &solution, t_instance &instance, int nbELS, int nbVoisin,
            int nbIter) {
   t_solution voisin;
@@ -318,21 +345,28 @@ void grasp(t_solution &solution, t_instance &instance, int nbELS, int nbVoisin,
   memset(&T[0], k, sizeof(int));
 
   for (int i = 1; i <= nbIter; i++) {
-    // etape 1. Choisir une solution au hasard
+    /* etape 1. Choisir une solution non traitée au hasard */
     do {
       genererVecteurBierwith(solution, instance);
       evaluer(solution, instance);
       rechercheLocale(solution, instance, 1000000);
     } while (T[solution.h] == 1);
-    T[solution.h] = 1;
+    T[solution.h] = 1; // marquage de la solution
 
-    t_solution sol_depart_els = voisin;
+    t_solution sol_depart_els = solution;
+
+    /* etape 2. Générer `nbVoisin` voisins, garder le meilleur et recomencer
+     *          `nbELS` fois.
+     */
     for (int j = 1; j <= nbELS; j++) {
       int        nbv = 0;
       t_solution best;
       best.count = 9999;
+
+      // génération des voisins de la solution de départ + sauvegarde du
+      // meilleur
       while (nbv < nbVoisin && iter < 1000000 && nbv != 0) {
-        voisin = genererVoisin(solution, instance);
+        voisin = genererVoisin(sol_depart_els, instance);
         evaluer(voisin, instance);
         rechercheLocale(voisin, instance, 1000000);
         if (T[voisin.h] == 0 && voisin.count < best.count) {
@@ -341,7 +375,7 @@ void grasp(t_solution &solution, t_instance &instance, int nbELS, int nbVoisin,
         }
         iter++;
       }
-      sol_depart_els = best;
+      sol_depart_els = best; // on repart de la meilleur solution
     }
   }
 }
