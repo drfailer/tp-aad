@@ -10,27 +10,25 @@ FONCTION:
 - rechLocale(s) -> ds
 */
 
-#include "utils.h"
 #include "tp2-AAD.h"
+#include "utils.h"
 #include <iostream>
 #include <stdlib.h>
+
+std::string jeuDeTest[11] = {"_test", "01", "02", "03", "04", "05",
+                             "06",    "07", "11", "16", "20"};
 
 int main() {
   t_solution solution = {0};
   t_instance instance = {0};
   srand(0);
 
-  lectureFichier(instance, "./test/la01.txt");
-  grasp(solution, instance, 10, 10, 1000);
-  std::cout << "solution: " << solution.count << std::endl;
-
-  lectureFichier(instance, "./test/la02.txt");
-  grasp(solution, instance, 10, 10, 1000);
-  std::cout << "solution: " << solution.count << std::endl;
-
-  /* lectureFichier(instance, "./test/la_test.txt"); */
-  /* grasp(solution, instance, 2, 2, 1000); */
-  /* std::cout << "solution: " << solution.count << std::endl; */
+  for (int i = 1; i < 11; ++i) {
+    lectureFichier(instance, "./test/la" + jeuDeTest[i] + ".txt");
+    std::cout << "./test/la" + jeuDeTest[i] + ".txt" << std::endl;
+    grasp(solution, instance, 10, 10, 1000);
+    std::cout << "solution: " << solution.count << std::endl;
+  }
 }
 
 void premierTest(t_solution &solution, t_instance &instance) {

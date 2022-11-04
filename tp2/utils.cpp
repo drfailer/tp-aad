@@ -42,7 +42,8 @@ static inline int hachage(t_solution &solution, t_instance &instance) {
  */
 void lectureFichier(t_instance &instance, std::string name) {
   std::ifstream fichier(name, std::ios::in);
-  int           machine;
+
+  int machine;
 
   if (fichier) {
     fichier >> instance.nbPieces >> instance.nbMachines;
@@ -108,10 +109,10 @@ void genererVecteurBierwith(t_solution &solution, t_instance &instance) {
  * @param instance Instance du graphe pour laquelle on evalue la solution.
  */
 void evaluer(t_solution &solution, t_instance &instance) {
-  int occurencePiece[nmax] = {0};
+  int occurencePiece[nmax]     = {0};
   int ordreSurMachine[nmax][2] = {0};
+  int rangPiece                = 0;
   int pieceActuelle;
-  int rangPiece = 0;
   int oldDate;
   int machineCourrante;
   int numeroPieceMachine;
@@ -191,10 +192,10 @@ void evaluer(t_solution &solution, t_instance &instance) {
 void recherchePosition(t_solution &solution, t_instance &instance,
                        int pieceCour, int rangCour, int rangPred, int piecePred,
                        int &indexCour, int &indexPred) {
-  bool trouve = false;
+  bool trouve    = false;
   int  rangICour = instance.nbMachines;
   int  rangIPred = instance.nbMachines;
-  int  i = instance.nbMachines * instance.nbPieces;
+  int  i         = instance.nbMachines * instance.nbPieces;
 
   while (!trouve) { // cour
     if (solution.bierwith[i] == pieceCour) {
@@ -252,18 +253,22 @@ void rechercheLocale(t_solution &solution, t_instance &instance, int maxIter) {
   rangCour = -1;
   pieceCour = -1;
   machineCour = -1;
+
   // pere de *
   rangPred = solution.pereEtoile.rang;
   piecePred = solution.pereEtoile.piece;
   machinePred = instance.machines[piecePred][rangPred];
+
   while ((iter < maxIter) && (stop == 0)) {
     // test même machine
     if (machineCour == machinePred) {
       solutionPrime = solution;
+
       // modification de `solutionPrime`
       recherchePosition(solution, instance, pieceCour, rangCour, rangPred,
                         piecePred, indexCour, indexPred);
       permuter(solutionPrime, indexCour, indexPred);
+
       // evaluation de la nouvelle solution
       evaluer(solutionPrime, instance);
 
@@ -274,6 +279,7 @@ void rechercheLocale(t_solution &solution, t_instance &instance, int maxIter) {
         rangCour = -1;
         pieceCour = -1;
         machineCour = -1;
+
         // pere de *
         rangPred = solution.pereEtoile.rang;
         piecePred = solution.pereEtoile.piece;
@@ -283,6 +289,7 @@ void rechercheLocale(t_solution &solution, t_instance &instance, int maxIter) {
         rangCour = rangPred;
         pieceCour = piecePred;
         machineCour = machinePred;
+
         // j = pere[i]
         rangPred = solution.pere[pieceCour][rangCour].rang;
         piecePred = solution.pere[pieceCour][rangCour].piece;
@@ -293,6 +300,7 @@ void rechercheLocale(t_solution &solution, t_instance &instance, int maxIter) {
       rangCour = rangPred;
       pieceCour = piecePred;
       machineCour = machinePred;
+
       // j = pere[i]
       rangPred = solution.pere[pieceCour][rangCour].rang;
       piecePred = solution.pere[pieceCour][rangCour].piece;
@@ -317,9 +325,9 @@ void rechercheLocale(t_solution &solution, t_instance &instance, int maxIter) {
  * @return Solution voisinne de la solution donnée en entrée.
  */
 t_solution genererVoisin(t_solution &solution, t_instance &instance) {
-  t_solution voisin = solution;
+  t_solution voisin         = solution;
   int        tailleBierwith = instance.nbPieces * instance.nbMachines;
-  int        p1 = rand() % tailleBierwith + 1;
+  int        p1             = rand() % tailleBierwith + 1;
   int        p2;
 
   do {
@@ -351,6 +359,7 @@ void grasp(t_solution &solution, t_instance &instance, int nbELS, int nbVoisin,
   t_solution voisin;
   t_solution bestSolution;
   bestSolution.count = inf;
+
   int iter = 0;
 
   memset(&T[0], k, sizeof(int));
@@ -370,6 +379,7 @@ void grasp(t_solution &solution, t_instance &instance, int nbELS, int nbVoisin,
      *          `nbELS` fois.
      */
     for (int j = 1; j <= nbELS; j++) {
+
       int        nbv = 0;
       t_solution tmpBest;
       tmpBest.count = inf;
@@ -383,6 +393,7 @@ void grasp(t_solution &solution, t_instance &instance, int nbELS, int nbVoisin,
         if (T[voisin.h] == 0) {
           if (voisin.count < tmpBest.count)
             tmpBest = voisin;
+
           nbv++;
           T[voisin.h] = 1;
         }
