@@ -15,6 +15,7 @@
 #+LATEX_HEADER: \fancyfoot[R]{\today}
 
 #+LATEX_HEADER: \usepackage{multicol}
+#+LATEX_HEADER: \lstset{aboveskip=20pt,belowskip=20pt}
 #+begin_export latex
 \begin{titlepage}
 \begin{center}
@@ -55,14 +56,14 @@
 
 On cherche à résoudre un problème de *Job Shop*. Un *Job Shop* correspond à une
 séquence de passages dans des machines pour un ensemble de pièces. Chaque pièce
-passe dans chaque machines mais dans des ordres et pendant des durées
-différentes. Notre but est de minimiser le temps nécessaires pour que toutes les
-pièces ai finit leur processus.
+passe dans chaque machine mais dans des ordres et pendant des durées
+différentes. Notre but est de minimiser le temps nécessaire pour que toutes les
+pièces aient finit leur processus.
    
 ** Structure et Choix d'implémentation
 
 Il nous faut stocker plusieurs informations tout du long de notre étude du
-job shop. Pour cela nous avons séparer nos données en 2 structures distinctes:
+job shop. Pour cela nous avons séparé nos données en 2 structures distinctes:
 
 - Une structure =instance_t= qui va contenir:
   - Le nombre de Machines et de Pièces
@@ -96,7 +97,7 @@ formalisation de brunel. Cette représentation est sous la forme:
 
 On peut donc récupérer toutes les informations de ce fichier avec une simple
 boucle =for= comme on peut le voir dans le code ci dessous:
-    
+    #+caption: Boucle de parcours du fichier
    #+BEGIN_SRC C++
      fichier >> instance.nbPieces >> instance.nbMachines;
 
@@ -110,20 +111,20 @@ boucle =for= comme on peut le voir dans le code ci dessous:
      }
 #+END_SRC
 
-** Évaluer d'un graphe
+** Évaluation d'un graphe
 
-L'évaluation nécessite d'avoir au préalable générer un *vecteur de Bierwith* avec
-la fonction dédiée. Le but de l'évaluation est de trouver les dates au plus tôt
-pour un vecteur de Bierwith donné, et donc de mettre à jours les tableaux =dates=
+L'évaluation nécessite d'avoir au préalable généré un *vecteur de Bierwith* avec
+la fonction éponyme. Le but de l'évaluation est de trouver les dates au plus tôt
+pour un vecteur de Bierwith donné, et donc de mettre à jour les tableaux =dates=
 et =pere= de =solution= et le coût de la solution. La fonction permet aussi de
-trouver le père du nœud *** on en a besoin par la suite. Enfin, à la fin de
-l'évaluation, on calcule aussi le *hasch* de la solution, se *hash* sera utilisé par
-la suite.
+trouver le père du nœud *\** on en a besoin par la suite. Enfin, à la fin de
+l'évaluation, on calcule aussi le *hash* de la solution, ce *hash* sera utilisé par
+la suite lors de la fonction ~GRASP~.
 
-Le fonctionnement de la fonctions est le suivant:
+Le fonctionnement de la fonction est le suivant:
 
 On traite les pièces suivant leur apparition dans le vecteur de Bierwith. On a
-donc une boucle qui parcours le vecteur. A chaque tour de boucle, on met à
+donc une boucle qui parcourt le vecteur. A chaque tour de boucle, on met à
 jour =pieceActuelle= qui correspond au numéro de la pièce courante, et =rangPiece=
 qui correspond au rang de la pièce. Pour trouver le rang, on utilise un
 tableau =occurencePiece= qui compte l'apparition des pièces.
@@ -139,10 +140,10 @@ tableau =occurencePiece= qui compte l'apparition des pièces.
    }
 #+end_src
 
-On commence par mettre à jours la date (et le père) suivant le lien
+On commence par mettre à jour la date (et le père) suivant le lien
 horizontal. Ici, on modifie la date si $date(piecePrecedente) +
 cout(piecePrecedente) > date(pieceActuelle)$. A noter que le lien horizontal
-n'est mis à jours que pour les pièces de rang supérieur à 1 puisqu'une pièce
+n'est mis à jour que pour les pièces de rang supérieur à 1 puisqu'une pièce
 de rang 1 n'a pas de père (le nœud *0* ne compte pas).
 
 #+caption: Traitement de l'arc horizontal.
@@ -153,14 +154,14 @@ de rang 1 n'a pas de père (le nœud *0* ne compte pas).
 
     if (oldDate + instance.coutPieceMachine[pieceActuelle][rangPiece - 1]
         > solution.dates[pieceActuelle][rangPiece]) {
-      // mise à jours de la solution
+      // mise à jour de la solution
     }
    }
 #+end_src
 
 Ensuite on traite le lien disjonctif. Ici le principe est le même sauf qu'on
 regarde la pièce qui est passé en dernier sur la machine courante et la date
-est modifié si $pieceSurMachine + cout(pieceSurMachine) > cout(piece)$.
+est modifiée si $pieceSurMachine + cout(pieceSurMachine) > cout(piece)$.
 
 #+caption: Traitement de l'arc disjonctif.
 #+begin_src C
@@ -178,8 +179,8 @@ est modifié si $pieceSurMachine + cout(pieceSurMachine) > cout(piece)$.
    }
 #+end_src
 
-À la fin on met à jour la pièce sur la machine et on met à jours le coût de la
-solution si besoin.
+À la fin, on met à jour la pièce sur la machine ainsi que le coût de la solution
+si besoin.
 
 #+caption: Mise à jour de la piece sur la machine et du coût
 #+begin_src C
@@ -192,7 +193,7 @@ solution si besoin.
   if (rangPiece == instance.nbMachines) {
     if (solution.dates[pieceActuelle][rangPiece]
         + instance.coutPieceMachine[pieceActuelle][rangPiece] > solution.count) {
-      // mise à jours du cout et du père de '*'
+      // mise à jour du cout et du père de '*'
     }
    }
   }
@@ -225,42 +226,41 @@ de hachage.
   }
 #+end_src
 
-La fonction est =inline= pour avoir un code plus rapide.
-
+La fonction utilise le mot clé =inline= pour avoir un code plus rapide.
 
 ** Recherche locale
 
 *** Raisonnement
 
 Le but de cette fonction est de nous retourner la meilleure solution au
-niveau locale, c'est à dire qu'on va prendre en argument une solution
-actuelle, et on va chercher toutes les modification locales possibles
+niveau local, c'est à dire qu'on va prendre en argument une solution
+actuelle, et on va chercher toutes les modifications locales possibles
 améliorant notre solution. Les modifications locales correspondent à une
 permutation entre 2 opérations sur la même machine mais avec des pièces
 différentes (et on ne s'intéresse qu'au chemin critique vu que c'est celui ci
 qui nous limite, le chemin critique est trouvé en parcourant les pères, et
 ceux en commençant par notre noeud étoile).
 
-La logique de cette algorithme est donc de parcourir notre chemin critique en
+La logique de cet algorithme est donc de parcourir notre chemin critique en
 sens inverse (jusqu'à arriver au noeud 0, le noeud de début), et durant le
 parcours du chemin, si on à un arc disjonctif, on va évaluer de nouveau notre
-solution en permutant cette fois-ci les deux opérations à l'origine de cette
-arc. Si la solution ainsi trouvé est meilleur ont repart du noeud de fin
+solution en permutant cette fois-ci les deux opérations à l'origine de cet
+arc. Si la solution ainsi trouvée est meilleur ont repart du noeud de fin
 (étoile) et on recommence. Sinon (arc non disjonctif ou pire coût) on
 continue notre parcours du chemin critique.
 
 *** Implémentation
     
-Pour pouvoir permuter nos 2 noeuds dans le vecteur, on doit d'abord
-connaître leur position dans le vecteur de bierwith, C'est le but de notre
-fonction =recherchePosition= qui va nous prendre la pièce et le range de
-notre noeud courant et précédent et va nous renvoyer leur position dans le
-vecteur de bierwith. Pour cela on parcours le vecteur en sens inverse et dès
-qu'on voit notre pièce, on décrémente son rang. Dès qu'on atteint 0, on à
-trouvé notre index. Une optimisation apporté est de séparer le while on deux,
-en effet une fois qu'on à trouvé notre noeud courant, plus besoin de le
-chercher on peut se concentrer seulement sur le précédent.
+Pour pouvoir permuter nos 2 noeuds dans le vecteur, on doit d'abord connaître
+leurs positions. C'est le but de notre fonction =recherchePosition= qui va prendre
+la pièce et le rang de notre noeud courant et précédent et va nous renvoyer
+leurs positions dans le vecteur de bierwith. Pour cela on parcours le vecteur en
+sens inverse et dès qu'on voit notre pièce, on décrémente son rang. Dès qu'on
+atteint le bon rang, on à trouvé notre index. Une optimisation apportée est de
+séparer le =while= en deux, en effet une fois qu'on a trouvé notre noeud courant,
+plus besoin de le chercher on peut se concentrer seulement sur le précédent.
 
+   #+caption: Squelette de la fonction
 #+BEGIN_SRC C
   while (!trouve) { // cour
     if (solution.bierwith[i] == pieceCour) {
@@ -287,9 +287,7 @@ chercher on peut se concentrer seulement sur le précédent.
     --i;
 #+END_SRC
 
-\clearpage
-
-Une fois cette fonction écrite, nos parties se résume à:
+Une fois cette fonction écrite, nos parties se résumes à:
 
 #+BEGIN_SRC C
   // Si arc disjonctif
@@ -314,8 +312,6 @@ Une fois cette fonction écrite, nos parties se résume à:
    }
 #+END_SRC
 
-\clearpage
-
 ** GRASP
 
 Le but de cet algorithme est de s'approcher au maximum de la meilleur solution
@@ -338,12 +334,10 @@ pour s'assurer que la solution que l'on traite n'a jamais été explorée.
   T[solution.h] = 1; // marquage de la solution
 #+end_src
 
-\clearpage
-
 Ensuite on génère =nbVoisin= voisins de la solution trouvée précédemment. Pour
 chaque voisin, on l'évalue, on fait une recherche locale, si le voisin n'est pas
-traité, on test si le coût est plus faible que celui de la meilleure solution
-trouvée jusqu'ici, on met à jour la meilleur solution.
+traité, on teste si le coût est plus faible que celui de la meilleure solution
+trouvée jusqu'ici. On met à jour la meilleur solution si c'est le cas.
 
 #+begin_src C
   for (int j = 1; j <= nbELS; j++) {
@@ -381,7 +375,6 @@ sécurité pour éviter une boucle infinie dans le cas ou on arrive pas à gén�
 On répète les étapes précédentes =nbIter= fois et on met à jour =bestSolution= à
 chaque fois. À la fin, =solution= prend la valeur de la meilleur solution trouvée.
 
-\clearpage
 
 * Conclusion
 
@@ -390,31 +383,31 @@ chaque fois. À la fin, =solution= prend la valeur de la meilleur solution trouv
 Voici un exemple des résultats qu'on obtient:
 
 #+caption: Tableau des résultats
-| Num de test | Résultat optimal | Résultat obtenu |
-|-------------+------------------+-----------------|
-| la01        |              666 |             666 |
-| la02        |              655 |             663 |
-| la03        |              597 |             619 |
-| la04        |              590 |             598 |
-| la05        |              593 |             593 |
-| la06        |              926 |             926 |
-| la07        |              890 |             890 |
-| la11        |             1222 |            1222 |
-| la16        |              945 |             ??? |
-| la20        |              902 |             ??? |
+| Num de test | Nombre de Pièces | Nombre de Machines | Résultat optimal | Résultat obtenu |
+|-------------+------------------+--------------------+------------------+-----------------|
+| la01        |               10 |                  5 |              666 |             666 |
+| la02        |               10 |                  5 |              655 |             663 |
+| la03        |               10 |                  5 |              597 |             619 |
+| la04        |               10 |                  5 |              590 |             598 |
+| la05        |               10 |                  5 |              593 |             593 |
+| la06        |               15 |                  5 |              926 |             926 |
+| la07        |               15 |                  5 |              890 |             890 |
+| la11        |               20 |                  5 |             1222 |            1222 |
+| la16        |               10 |                 10 |              945 |             ??? |
+| la20        |               10 |                 10 |              902 |             ??? |
 
 \FloatBarrier
 
 ** Analyse de ces derniers
 
 On remarque que nos solutions sont très proches, et si on relance de façon
-aléatoire on obtient les bons résultats la plupart du temps. Cependant pour
-le cas du =la16= et =la20= le temps d'exécution est extrêmement long. Il nous
-faudrait faire des optimisation plus complexes pour avoir des temps de calculs
-plus raisonnables sur ces deux solutions.
+aléatoire on obtient les bons résultats la plupart du temps. Cependant pour les
+cas =la16= et =la20= le temps d'exécution est extrêmement long. Il nous faudrait
+faire des optimisations plus complexes pour avoir des temps de calculs plus
+raisonnables sur ces deux solutions.
 
 Comme dit précédemment on peut linéariser les tableaux 2D afin d'avoir une
 meilleur optimisation, au prix d'une implémentation et d'une compréhension plus
-compliqué. Cependant, on constate tout de même que nos algorithmes sont
-relativement efficaces et trouve de bonnes solutions pour des problèmes simple
+compliquée. Cependant, on constate tout de même que nos algorithmes sont
+relativement efficaces et trouvent de bonnes solutions pour des problèmes simples
 relativement rapidement.
