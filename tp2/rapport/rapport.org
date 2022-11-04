@@ -58,18 +58,18 @@ On cherche à résoudre un problème de *Job Shop*. Un *Job Shop* correspond à 
 séquence de passages dans des machines pour un ensemble de pièces. Chaque pièce
 passe dans chaque machine mais dans des ordres et pendant des durées
 différentes. Notre but est de minimiser le temps nécessaire pour que toutes les
-pièces aient finit leur processus.
+pièces aient fini leur processus.
    
 ** Structure et Choix d'implémentation
 
-Il nous faut stocker plusieurs informations tout du long de notre étude du
+Il nous faut stocker plusieurs informations tout au long de notre étude du
 job shop. Pour cela nous avons séparé nos données en 2 structures distinctes:
 
 - Une structure =instance_t= qui va contenir:
   - Le nombre de Machines et de Pièces
-  - Un tableau2D qui va nous renvoyer la machine correspondante à la pièce
+  - Un tableau 2D qui va nous renvoyer la machine correspondante à la pièce
     ($1^{er}$ argument) et au numéro d'ordre ($2^{nd}$ argument). (On peut linéariser
-    le tableau afin d'avoir une meilleure optimisation.) 
+    le tableau afin d'avoir une meilleure optimisation).
   - De la même façon, un tableau 2D qui va nous renvoyer cette fois-ci le temps
     que va passer la pièce n°i pour l'opération n°j (~T[i][j]~).
 
@@ -79,9 +79,9 @@ job shop. Pour cela nous avons séparé nos données en 2 structures distinctes:
   - L'opération *père* pour une pièce et une opération donnée (l'opération ~pere[i][j]~ est
     l'opération qui précède l'opération de la pièces *i* sur la machine *j*).
   - Le *père* de notre élément étoile (le dernier élément, lorsque toute nos
-    opérations sont finis).
+    opérations sont finies).
   - Le *vecteur de Bierwith* qui a donné cette solution.
-  - Le hash de cette solution. (utile pour le GRASP).
+  - Le =hash= de cette solution. (utile pour le GRASP).
   
 
 * Implémentation
@@ -89,14 +89,14 @@ job shop. Pour cela nous avons séparé nos données en 2 structures distinctes:
 ** Lecture Dans un fichier
 
 Nous avons déjà un choix de représentation des données du job shop si on suit la
-formalisation de brunel. Cette représentation est sous la forme:
+*formalisation de Brunel*. Cette représentation est sous la forme:
 
 - Une première ligne donnant le nombre de machines et de pièces
 - Chaque ligne n°i suivante contient la suite d'opération (couple [machine
   coût]) pour la pièce n°i.
 
 On peut donc récupérer toutes les informations de ce fichier avec une simple
-boucle =for= comme on peut le voir dans le code ci dessous:
+boucle =for= comme on peut le voir dans le code ci-dessous:
     #+caption: Boucle de parcours du fichier
    #+BEGIN_SRC C++
      fichier >> instance.nbPieces >> instance.nbMachines;
@@ -160,7 +160,7 @@ de rang 1 n'a pas de père (le nœud *0* ne compte pas).
 #+end_src
 
 Ensuite on traite le lien disjonctif. Ici le principe est le même sauf qu'on
-regarde la pièce qui est passé en dernier sur la machine courante et la date
+regarde la pièce qui est passée en dernier sur la machine courante et la date
 est modifiée si $pieceSurMachine + cout(pieceSurMachine) > cout(piece)$.
 
 #+caption: Traitement de l'arc disjonctif.
@@ -182,7 +182,7 @@ est modifiée si $pieceSurMachine + cout(pieceSurMachine) > cout(piece)$.
 À la fin, on met à jour la pièce sur la machine ainsi que le coût de la solution
 si besoin.
 
-#+caption: Mise à jour de la piece sur la machine et du coût
+#+caption: Mise à jour de la pièce sur la machine et du coût
 #+begin_src C
   // mise à jour de l'ordre de passage sur les machines
   ordreSurMachine[machineCourrante][0] = pieceActuelle;
@@ -201,8 +201,8 @@ si besoin.
 
 *** Calcul du hash
 
-Dans les parties suivantes, on aura besoin de pourvoir tester si un solution a
-déjà été traitée, pour ce faire on aura besoin d'identifier les solution via un
+Dans les parties suivantes, on aura besoin de pouvoir tester si un solution a
+déjà été traitée, pour ce faire on aura besoin d'identifier les solutions via un
 =hash=. La fonction de hachage suit la formule suivante:
 
 $h = \sum_{d \in dates}{(d^{2} \% k)}$ ou k est le nombre d'éléments de la table
@@ -232,32 +232,32 @@ La fonction utilise le mot clé =inline= pour avoir un code plus rapide.
 
 *** Raisonnement
 
-Le but de cette fonction est de nous retourner la meilleure solution au
-niveau local, c'est à dire qu'on va prendre en argument une solution
-actuelle, et on va chercher toutes les modifications locales possibles
-améliorant notre solution. Les modifications locales correspondent à une
-permutation entre 2 opérations sur la même machine mais avec des pièces
-différentes (et on ne s'intéresse qu'au chemin critique vu que c'est celui ci
-qui nous limite, le chemin critique est trouvé en parcourant les pères, et
-ceux en commençant par notre noeud étoile).
+Le but de cette fonction est de nous retourner la meilleure solution au niveau
+local, c'est à dire qu'on va prendre en argument une solution actuelle, et on va
+chercher toutes les modifications locales possibles améliorant notre
+solution. Les modifications locales correspondent à une permutation entre 2
+opérations sur la même machine mais avec des pièces différentes (et on ne
+s'intéresse qu'au chemin critique étant donné que c'est celui ci qui nous
+limite, le chemin critique est trouvé en parcourant les pères, en commençant par
+le nœud étoile).
 
 La logique de cet algorithme est donc de parcourir notre chemin critique en
-sens inverse (jusqu'à arriver au noeud 0, le noeud de début), et durant le
-parcours du chemin, si on à un arc disjonctif, on va évaluer de nouveau notre
+sens inverse (jusqu'à arriver au nœud 0, le nœud de début), et durant le
+parcours du chemin, si on a un arc disjonctif, on va évaluer de nouveau notre
 solution en permutant cette fois-ci les deux opérations à l'origine de cet
-arc. Si la solution ainsi trouvée est meilleur ont repart du noeud de fin
+arc. Si la solution ainsi trouvée est meilleure ont repart du nœud de fin
 (étoile) et on recommence. Sinon (arc non disjonctif ou pire coût) on
 continue notre parcours du chemin critique.
 
 *** Implémentation
     
-Pour pouvoir permuter nos 2 noeuds dans le vecteur, on doit d'abord connaître
+Pour pouvoir permuter nos 2 nœuds dans le vecteur, on doit d'abord connaître
 leurs positions. C'est le but de notre fonction =recherchePosition= qui va prendre
-la pièce et le rang de notre noeud courant et précédent et va nous renvoyer
+la pièce et le rang de notre nœud courant et précédent et va nous renvoyer
 leurs positions dans le vecteur de bierwith. Pour cela on parcours le vecteur en
 sens inverse et dès qu'on voit notre pièce, on décrémente son rang. Dès qu'on
-atteint le bon rang, on à trouvé notre index. Une optimisation apportée est de
-séparer le =while= en deux, en effet une fois qu'on a trouvé notre noeud courant,
+atteint le bon rang, on a trouvé notre index. Une optimisation apportée est de
+séparer le =while= en deux, en effet une fois qu'on a trouvé notre nœud courant,
 plus besoin de le chercher on peut se concentrer seulement sur le précédent.
 
    #+caption: Squelette de la fonction
@@ -287,7 +287,7 @@ plus besoin de le chercher on peut se concentrer seulement sur le précédent.
     --i;
 #+END_SRC
 
-Une fois cette fonction écrite, nos parties se résumes à:
+Une fois cette fonction écrite, nos parties se résument à:
 
 #+BEGIN_SRC C
   // Si arc disjonctif
@@ -314,15 +314,15 @@ Une fois cette fonction écrite, nos parties se résumes à:
 
 ** GRASP
 
-Le but de cet algorithme est de s'approcher au maximum de la meilleur solution
+Le but de cet algorithme est de s'approcher au maximum de la meilleure solution
 du problème. Pour ce faire, on suit le schéma suivant:
 
 #+CAPTION: Principe du GRASP. 
 [[./img/grasp_shema.png]]
 \FloatBarrier
 
-On commence par générer une solution aléatoire. Utiliser une table de hachage
-pour s'assurer que la solution que l'on traite n'a jamais été explorée.
+On commence par générer une solution aléatoire. On utilise une table de hachage
+pour s'assurer que les solutions que l'ont traite n'ont jamais été explorées.
 
 #+CAPTION: Recherche d'une solution aléatoire non traitée.
 #+begin_src C
@@ -337,7 +337,7 @@ pour s'assurer que la solution que l'on traite n'a jamais été explorée.
 Ensuite on génère =nbVoisin= voisins de la solution trouvée précédemment. Pour
 chaque voisin, on l'évalue, on fait une recherche locale, si le voisin n'est pas
 traité, on teste si le coût est plus faible que celui de la meilleure solution
-trouvée jusqu'ici. On met à jour la meilleur solution si c'est le cas.
+trouvée jusqu'ici. On met à jour la meilleure solution si c'est le cas.
 
 #+begin_src C
   for (int j = 1; j <= nbELS; j++) {
@@ -359,7 +359,7 @@ trouvée jusqu'ici. On met à jour la meilleur solution si c'est le cas.
       }
       iter++;
     }
-    solDepartELS = tmpBest; // on repart de la meilleur solution
+    solDepartELS = tmpBest; // on repart de la meilleure solution
 
     // sauvegarde du meilleur
     if (tmpBest.count < bestSolution.count)
@@ -367,13 +367,13 @@ trouvée jusqu'ici. On met à jour la meilleur solution si c'est le cas.
    }
 #+end_src
 
-A noter que le nombre de voisin trouvé n'est incrémenté uniquement lorsque le
+A noter que le nombre de voisins trouvé est incrémenté uniquement lorsque le
 voisin généré n'a pas été traité. De ce fait, on laisse une condition de
-sécurité pour éviter une boucle infinie dans le cas ou on arrive pas à générer
+sécurité pour éviter une boucle infinie dans le cas ou on n'arrive pas à générer
 =nbVoisin=.
 
 On répète les étapes précédentes =nbIter= fois et on met à jour =bestSolution= à
-chaque fois. À la fin, =solution= prend la valeur de la meilleur solution trouvée.
+chaque fois. À la fin, =solution= prend la valeur de la meilleure solution trouvée.
 
 
 * Conclusion
@@ -403,11 +403,11 @@ Voici un exemple des résultats qu'on obtient:
 On remarque que nos solutions sont très proches, et si on relance de façon
 aléatoire on obtient les bons résultats la plupart du temps. Cependant pour les
 cas =la16= et =la20= le temps d'exécution est extrêmement long. Il nous faudrait
-faire des optimisations plus complexes pour avoir des temps de calculs plus
+faire des optimisations plus complexes pour avoir des temps de calcul plus
 raisonnables sur ces deux solutions.
 
 Comme dit précédemment on peut linéariser les tableaux 2D afin d'avoir une
-meilleur optimisation, au prix d'une implémentation et d'une compréhension plus
-compliquée. Cependant, on constate tout de même que nos algorithmes sont
+meilleure optimisation, au prix d'une implémentation et d'une compréhension plus
+compliquées. Cependant, on constate tout de même que nos algorithmes sont
 relativement efficaces et trouvent de bonnes solutions pour des problèmes simples
 relativement rapidement.
