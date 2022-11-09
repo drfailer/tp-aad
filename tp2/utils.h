@@ -21,7 +21,7 @@ typedef struct {
 	int count;
 	int dates[nmax][nmax];
 	t_pere pere[nmax][nmax];
-	int bierwith[nmax];
+	int bierwith[nmax * nmax];
 	int h;
 	t_pere pereEtoile;
 } t_solution;
