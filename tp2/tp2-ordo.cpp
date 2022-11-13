@@ -17,21 +17,16 @@ void test(std::string name) {
 }
 
 int main() {
-	/*
-	 * IMPORTANT: On a un problème, si les tests sont exécutés les uns à la suites des autres le programme devient très lent.
-	 *            Il faut exécuter les test 1 par 1 (recompiler à chaque fois).
-	 */
-
-	//test("./test/la01.txt");
-	//test("./test/la02.txt");
-	//test("./test/la03.txt");
-	//test("./test/la04.txt");
-	//test("./test/la05.txt");
-	//test("./test/la06.txt");
-	//test("./test/la07.txt");
-	//test("./test/la11.txt");
-	//test("./test/la16.txt");
-	test("./test/la20.txt");
+  test("./test/la01.txt");
+  test("./test/la02.txt");
+  test("./test/la03.txt");
+  test("./test/la04.txt");
+  test("./test/la05.txt");
+  test("./test/la06.txt");
+  test("./test/la07.txt");
+  test("./test/la11.txt");
+  test("./test/la16.txt");
+  test("./test/la20.txt");
 }
 
 void premierTest(t_solution& solution, t_instance& instance) {

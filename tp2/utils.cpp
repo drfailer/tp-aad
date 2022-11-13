@@ -170,84 +170,83 @@ void recherchePosition(t_solution& solution, t_instance& instance,
  *        traite les noeuds du graphe.
  * @param instance Instance du graphe pour laquelle on evalue la solution.
  */
-void evaluer(t_solution& solution, t_instance& instance) {
-	int occurencePiece[nmax] = { 0 };
-	int ordreSurMachine[nmax][2] = { 0 };
-	int rangPiece = 0;
-	int pieceActuelle;
-	int oldDate;
-	int machineCourrante;
-	int numeroPieceMachine;
-	int rangPieceMachine;
+void evaluer(t_solution &solution, t_instance &instance) {
+  int occurencePiece[nmax] = {0};
+  int ordreSurMachine[nmax][2] = {0};
+  int rangPiece = 0;
+  int pieceActuelle;
+  int oldDate;
+  int machineCourrante;
+  int numeroPieceMachine;
+  int rangPieceMachine;
 
-	// reset des éléments de la solution
-	solution.count = 0;
-	memset(&solution.dates[0][0], 0, (nmax * nmax) * sizeof(int));
-	memset(&solution.pere[0][0], 0, (nmax * nmax) * sizeof(int));
+  // reset des éléments de la solution
+  solution.count = 0;
+  memset(&solution.dates[0][0], 0, (nmax * nmax) * sizeof(int));
+  memset(&solution.pere[0][0], 0, (nmax * nmax) * sizeof(int));
 
-	// parcours du vecteur de bierwith et mise à jour de solution
-	for (int i = 1; i <= instance.nbMachines * instance.nbPieces; ++i) {
-		pieceActuelle = solution.bierwith[i];
-		// pour connaitre le rang d'une pièce, ie le numéro du lien horizontal, il
-		// faut compter le nombre de fois que cette pièce à été trouvée dans le
-		// vecteur de bierwith.
-		rangPiece = ++occurencePiece[pieceActuelle];
+  // parcours du vecteur de bierwith et mise à jour de solution
+  for (int i = 1; i <= instance.nbMachines * instance.nbPieces; ++i) {
+    pieceActuelle = solution.bierwith[i];
+    // pour connaitre le rang d'une pièce, ie le numéro du lien horizontal, il
+    // faut compter le nombre de fois que cette pièce à été trouvée dans le
+    // vecteur de bierwith.
+    rangPiece = ++occurencePiece[pieceActuelle];
 
-		// lien horizontal
-		if (occurencePiece[pieceActuelle] > 1) {
-			oldDate =
-				solution.dates[pieceActuelle][rangPiece - 1]; // date du noeud
-															  // précédent
-															  // (horizontalement)
+    // lien horizontal
+    if (occurencePiece[pieceActuelle] > 1) {
+      oldDate =
+          solution.dates[pieceActuelle][rangPiece - 1]; // date du noeud
+                                                        // précédent
+                                                        // (horizontalement)
 
-			if (oldDate + instance.coutPieceMachine[pieceActuelle][rangPiece - 1] >
-				solution.dates[pieceActuelle][rangPiece]) {
-				solution.dates[pieceActuelle][rangPiece] =
-					oldDate + instance.coutPieceMachine[pieceActuelle][rangPiece - 1];
-				solution.pere[pieceActuelle][rangPiece].rang = rangPiece - 1;
-				solution.pere[pieceActuelle][rangPiece].piece = pieceActuelle;
-			}
-		}
+      if (oldDate + instance.coutPieceMachine[pieceActuelle][rangPiece - 1] >
+          solution.dates[pieceActuelle][rangPiece]) {
+        solution.dates[pieceActuelle][rangPiece] =
+            oldDate + instance.coutPieceMachine[pieceActuelle][rangPiece - 1];
+        solution.pere[pieceActuelle][rangPiece].rang = rangPiece - 1;
+        solution.pere[pieceActuelle][rangPiece].piece = pieceActuelle;
+      }
+    }
 
-		machineCourrante = instance.machines[pieceActuelle][rangPiece];
+    machineCourrante = instance.machines[pieceActuelle][rangPiece];
 
-		// lien disjonctif
-		if (ordreSurMachine[machineCourrante][0] != 0) {
-			numeroPieceMachine = ordreSurMachine[machineCourrante][0];
-			rangPieceMachine = ordreSurMachine[machineCourrante][1];
-			oldDate = solution.dates[numeroPieceMachine][rangPieceMachine];
+    // lien disjonctif
+    if (ordreSurMachine[machineCourrante][0] != 0) {
+      numeroPieceMachine = ordreSurMachine[machineCourrante][0];
+      rangPieceMachine = ordreSurMachine[machineCourrante][1];
+      oldDate = solution.dates[numeroPieceMachine][rangPieceMachine];
 
-			if (oldDate +
-				instance.coutPieceMachine[numeroPieceMachine][rangPieceMachine] >
-				solution.dates[pieceActuelle][rangPiece]) {
-				solution.dates[pieceActuelle][rangPiece] =
-					oldDate +
-					instance.coutPieceMachine[numeroPieceMachine][rangPieceMachine];
-				solution.pere[pieceActuelle][rangPiece].rang = rangPieceMachine;
-				solution.pere[pieceActuelle][rangPiece].piece = numeroPieceMachine;
-			}
-		}
+      if (oldDate +
+              instance.coutPieceMachine[numeroPieceMachine][rangPieceMachine] >
+          solution.dates[pieceActuelle][rangPiece]) {
+        solution.dates[pieceActuelle][rangPiece] =
+            oldDate +
+            instance.coutPieceMachine[numeroPieceMachine][rangPieceMachine];
+        solution.pere[pieceActuelle][rangPiece].rang = rangPieceMachine;
+        solution.pere[pieceActuelle][rangPiece].piece = numeroPieceMachine;
+      }
+    }
 
-		// mise à jour de l'ordre de passage sur les machines
-		ordreSurMachine[machineCourrante][0] = pieceActuelle;
-		ordreSurMachine[machineCourrante][1] = rangPiece;
+    // mise à jour de l'ordre de passage sur les machines
+    ordreSurMachine[machineCourrante][0] = pieceActuelle;
+    ordreSurMachine[machineCourrante][1] = rangPiece;
+  }
 
-		// si on traite le dernier noeud (*), on met à jour le cout de la solution
-		// et le père du dernier noeud.
-		if (rangPiece == instance.nbMachines) {
-			if (solution.dates[pieceActuelle][rangPiece] +
-				instance.coutPieceMachine[pieceActuelle][rangPiece] >
-				solution.count) {
-				solution.count = solution.dates[pieceActuelle][rangPiece] +
-					instance.coutPieceMachine[pieceActuelle][rangPiece];
-				solution.pereEtoile.piece = pieceActuelle;
-				solution.pereEtoile.rang = rangPiece;
-			}
-		}
-	}
-	solution.h = hachage(solution, instance);
+  // On recherche le coût total et le père du noeud *
+  for (int i = 1; i <= instance.nbPieces; ++i) {
+    if (solution.dates[i][instance.nbMachines] +
+            instance.coutPieceMachine[i][instance.nbMachines] >
+        solution.count) {
+      solution.count = solution.dates[i][instance.nbMachines] +
+                       instance.coutPieceMachine[i][instance.nbMachines];
+      solution.pereEtoile.piece = i;
+      solution.pereEtoile.rang = instance.nbMachines;
+    }
+  }
+
+  solution.h = hachage(solution, instance);
 }
-
 
 /*****************************************************************************/
 /*                             RECHERCHE LOCALE                              */
@@ -388,7 +387,7 @@ void grasp(t_solution& solution, t_instance& instance, int nbELS, int nbVoisin, 
 
 	int iter = 0;
 
-	memset(&T[0], k, sizeof(int));
+	memset(&T[0], 0,k * sizeof(int));
 
 	for (int i = 1; i <= nbIter; i++) {
 		/* etape 1. Choisir une solution non traitée au hasard */
